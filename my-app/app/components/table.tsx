@@ -13,7 +13,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDown, Filter, MoreHorizontal, Plus, Search } from "lucide-react"
+import { ChevronDown, Filter, MoreHorizontal, Plus, Search, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -28,6 +28,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export type Unit = {
     id: string
@@ -61,6 +64,7 @@ export function DataTable<TData, TValue>({
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
+    const [showFilters, setShowFilters] = React.useState(false)
 
     const table = useReactTable({
         data,
@@ -73,6 +77,12 @@ export function DataTable<TData, TValue>({
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
+        initialState: {
+            pagination: {
+                pageIndex: 0,
+                pageSize: 5,
+            },
+        },
         state: {
             sorting,
             columnFilters,
@@ -88,7 +98,7 @@ export function DataTable<TData, TValue>({
     const getPageNumbers = () => {
         const pageNumbers = []
         const maxVisiblePages = 5
-        
+
         if (totalPages <= maxVisiblePages) {
             for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(i)
@@ -116,9 +126,18 @@ export function DataTable<TData, TValue>({
                 pageNumbers.push(totalPages)
             }
         }
-        
+
         return pageNumbers
     }
+
+    const handleShowFilters = () => {
+        setShowFilters(!showFilters)
+    }
+
+    const clearAllFilters = () => {
+        table.resetColumnFilters()
+    }
+
 
     return (
         <div className="w-full bg-white p-4 shadow-md rounded-lg">
@@ -168,14 +187,14 @@ export function DataTable<TData, TValue>({
                         </Button>
                     )}
                     {onShowFiltersClick && (
-                        <Button variant={'outline'} onClick={onAddClick}>
+                        <Button variant={'outline'} onClick={handleShowFilters}>
                             <Filter className="mr-2 h-4 w-4" />
                             Show Filters
                         </Button>
                     )}
                 </div>
             </div>
-            <div className="rounded-md border">
+            <div className="flex rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -208,6 +227,107 @@ export function DataTable<TData, TValue>({
                         )}
                     </TableBody>
                 </Table>
+                {/* Filter Card Section */}
+                {showFilters && (
+                    <div className="w-1/3 transition-all duration-300">
+                        <Card className="bg-white shadow-md">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                <CardTitle className="text-lg font-semibold">Filters</CardTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setShowFilters(false)}
+                                    className="h-6 w-6"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Unit Type Filter */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="unitType">Unit Type</Label>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            if (value === "all") {
+                                                table.getColumn("unitType")?.setFilterValue("")
+                                            } else {
+                                                table.getColumn("unitType")?.setFilterValue(value)
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select unit type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Types</SelectItem>
+                                            <SelectItem value="Patrol Vehicle">Patrol Vehicle</SelectItem>
+                                            <SelectItem value="Emergency Response">Emergency Response</SelectItem>
+                                            <SelectItem value="Traffic Control">Traffic Control</SelectItem>
+                                            <SelectItem value="SWAT Vehicle">SWAT Vehicle</SelectItem>
+                                            <SelectItem value="Motorcycle Unit">Motorcycle Unit</SelectItem>
+                                            <SelectItem value="K9 Unit">K9 Unit</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="status">Status</Label>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            if (value === "all") {
+                                                table.getColumn("status")?.setFilterValue("")
+                                            } else {
+                                                table.getColumn("status")?.setFilterValue(value)
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Status</SelectItem>
+                                            <SelectItem value="Enabled">Enabled</SelectItem>
+                                            <SelectItem value="Disabled">Disabled</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Location Filter */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="location">Location</Label>
+                                    <Input
+                                        placeholder="Filter by location"
+                                        value={(table.getColumn("location")?.getFilterValue() as string) ?? ""}
+                                        onChange={(event) => table.getColumn("location")?.setFilterValue(event.target.value)}
+                                    />
+                                </div>
+
+                                {/* Vehicle Registration Filter */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="vehicleReg">Vehicle Registration</Label>
+                                    <Input
+                                        placeholder="Filter by vehicle reg"
+                                        value={(table.getColumn("vehicleReg")?.getFilterValue() as string) ?? ""}
+                                        onChange={(event) => table.getColumn("vehicleReg")?.setFilterValue(event.target.value)}
+                                    />
+                                </div>
+
+                                {/* Clear All Filters Button */}
+                                <div className="pt-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={clearAllFilters}
+                                        className="w-full"
+                                    >
+                                        Clear All Filters
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
@@ -218,7 +338,7 @@ export function DataTable<TData, TValue>({
                     <div className="flex w-[100px] items-center justify-center text-sm font-medium">
                         Page {currentPage} of {totalPages}
                     </div>
-                    
+
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
@@ -227,7 +347,7 @@ export function DataTable<TData, TValue>({
                                     className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : "cursor-pointer"}
                                 />
                             </PaginationItem>
-                            
+
                             {getPageNumbers().map((pageNumber, index) => (
                                 <PaginationItem key={index}>
                                     {pageNumber === 'ellipsis' ? (
@@ -243,7 +363,7 @@ export function DataTable<TData, TValue>({
                                     )}
                                 </PaginationItem>
                             ))}
-                            
+
                             <PaginationItem>
                                 <PaginationNext
                                     onClick={() => table.nextPage()}
