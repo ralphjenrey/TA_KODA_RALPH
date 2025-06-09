@@ -42,7 +42,7 @@ export default function RootLayout({
               <SidebarTrigger className="-ml-1" />
 
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+                <h1 className="text-lg font-semibold text-gray-900">{"Page Title"}</h1>
               </div>
 
               <div className="ml-auto flex items-center gap-2">
